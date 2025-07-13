@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtualenvs
+.venv/
+env/
+venv/
+
+# dotenv
+.env
+
+# Editor files
+.vscode/
+.idea/

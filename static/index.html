@@ -1,0 +1,78 @@
+<!-- mcp-server/static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>MCP Demo</title>
+  <style>
+    body { font-family: sans-serif; margin:2em; }
+    textarea { width:100%; height:4em; }
+    pre      { background:#f6f8fa; padding:1em; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h1>MCP Server Demo</h1>
+  <p>Ask in plain English:</p>
+  <textarea id="q">List top 5 products by list price</textarea><br/>
+  <button id="run">Run (HTTP REST)</button>
+  <button id="runRpc">Run (JSON-RPC)</button>
+
+  <h2>Result</h2>
+  <pre id="out">…</pre>
+
+  <script>
+    const out = document.getElementById("out");
+    document.getElementById("run").onclick = async () => {
+      const q = document.getElementById("q").value;
+      out.textContent = "Loading…";
+      try {
+        const res = await fetch("/mcp/tools/run_sql/execute", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            prompt_id:   "sql_generation",
+            resource_id: "describe_schema",
+            parameters:  { user_text: q, schema: "", tables: "" }
+          })
+        });
+        const j = await res.json();
+        out.textContent = JSON.stringify(j, null, 2);
+      } catch (e) {
+        out.textContent = "ERROR: "+e;
+      }
+    };
+
+    document.getElementById("runRpc").onclick = async () => {
+      const q = document.getElementById("q").value;
+      out.textContent = "Loading…";
+      // invoke JSON-RPC over HTTP-SSE:
+      // we'll use EventSource to send a single POST then stream back result
+      const id = Date.now();
+      const payload = {
+        jsonrpc: "2.0",
+        id,
+        method: "call_tool",
+        params: {
+          tool_id:     "tool://run_sql",
+          prompt_id:   "pr://sql_generation",
+          resource_id: "res://describe_schema",
+          parameters:  { user_text: q, schema:"", tables:"" }
+        }
+      };
+      // For simplicity, we'll do a fetch then print the raw JSON-RPC response
+      try {
+        const r = await fetch("http://localhost:8001/", { // <-- Change this line
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload)
+        });
+        const j = await r.json();
+        out.textContent = JSON.stringify(j, null, 2);
+      } catch(e){
+        out.textContent = "RPC ERROR: "+e;
+      }
+    };
+  </script>
+</body>
+</html>

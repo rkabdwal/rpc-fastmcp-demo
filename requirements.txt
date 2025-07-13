@@ -1,0 +1,6 @@
+fastmcp>=2.0.0
+pyodbc           # or pymssql
+openai>=0.27.0
+fastapi>=0.95.0  # if exposing docs
+uvicorn>=0.22.0  # ASGI server
+python-dotenv>=1.0.0
